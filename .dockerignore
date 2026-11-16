@@ -1,0 +1,16 @@
+# Dépendances et fichiers générés localement
+node_modules
+dist
+coverage
+test-results
+
+# Historique Git et réglages de l'éditeur
+.git
+.github
+.vscode
+.idea
+
+# Configuration locale et journaux
+.env
+.env.*
+*.log

@@ -34,6 +34,27 @@ npm install
 | `npm run test:watch` | Tests en mode watch |
 | `npm run test:coverage` | Tests avec rapport de couverture |
 
+## Lancement avec Docker
+
+Depuis le dossier du projet, avec Docker Desktop démarré :
+
+```bash
+docker compose up -d
+```
+
+L'application est disponible sur http://localhost. Au premier lancement, Compose construit l'image à partir du `Dockerfile`. Pour reconstruire l'image après une modification du code :
+
+```bash
+docker compose up -d --build
+```
+
+Pour voir les journaux ou arrêter le conteneur :
+
+```bash
+docker compose logs -f
+docker compose down
+```
+
 ## Structure du projet
 
 ```
