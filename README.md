@@ -154,6 +154,10 @@ python run-tests.py
 
 Sur Linux, utiliser `python3 run-tests.py` si la commande `python` n'est pas disponible. Le script reconnaît le projet, lance les tests Jest et génère `test-results/junit.xml`. Il remplace son ancien rapport avant chaque exécution et retourne un code non nul si les tests échouent ou si le rapport ne peut pas être produit. Le dossier des rapports est ignoré par Git.
 
+### Tests automatiques sur GitHub
+
+Le workflow `.github/workflows/ci.yml` lance ces tests à chaque push et pull request. Dans l'onglet **Actions**, sélectionner une exécution pour consulter son résumé et télécharger le rapport JUnit dans l'artefact `junit-test-results`, y compris après un échec si le rapport a pu être généré.
+
 ## License
 
 MIT

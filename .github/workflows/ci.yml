@@ -1,0 +1,69 @@
+name: Unit tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Get project files
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: python3 run-tests.py
+
+      - name: Summarize test results
+        if: ${{ always() }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          report = Path("test-results/junit.xml")
+          try:
+              suite = ET.parse(report).getroot()
+          except (OSError, ET.ParseError):
+              content = "## Résultats des tests\n\nAucun rapport JUnit disponible.\n"
+          else:
+              content = (
+                  "## Résultats des tests\n\n"
+                  f"- Tests : {suite.get('tests', '?')}\n"
+                  f"- Échecs : {suite.get('failures', '?')}\n"
+                  f"- Erreurs : {suite.get('errors', '?')}\n"
+              )
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+              summary.write(content)
+          PY
+
+      - name: Upload JUnit report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: junit-test-results
+          path: test-results/junit.xml
+          if-no-files-found: warn
