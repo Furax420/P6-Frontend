@@ -144,6 +144,16 @@ npm test
 
 Les tests utilisent `createMemoryRouter` avec `hydrationData` pour injecter les donnees directement sans passer par le loader, ce qui evite les dependances aux Web APIs dans jsdom.
 
+### Tests automatisés avec rapport JUnit
+
+Avec Python 3.8 ou supérieur et les dépendances npm installées (`npm ci`), lancer :
+
+```bash
+python run-tests.py
+```
+
+Sur Linux, utiliser `python3 run-tests.py` si la commande `python` n'est pas disponible. Le script reconnaît le projet, lance les tests Jest et génère `test-results/junit.xml`. Il remplace son ancien rapport avant chaque exécution et retourne un code non nul si les tests échouent ou si le rapport ne peut pas être produit. Le dossier des rapports est ignoré par Git.
+
 ## License
 
 MIT
