@@ -55,6 +55,21 @@ docker compose logs -f
 docker compose down
 ```
 
+### Tester l’image publiée dans GHCR
+
+Dans GitHub, ouvre **Actions**, puis le résumé d’un push réussi. Copie la référence de l’image affichée dans **Docker image published on GHCR**. Pour un package privé, connecte Docker à GHCR avec un jeton GitHub *classic* qui a le droit `read:packages`. [Connexion au registre](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-to-the-container-registry).
+
+Depuis ce dossier dans PowerShell, remplace `TAG` par le tag publié.
+
+```powershell
+$env:P6_IMAGE = 'ghcr.io/furax420/p6-frontend:TAG'
+docker pull $env:P6_IMAGE
+docker compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d --no-build
+docker compose -f docker-compose.yml -f docker-compose.ghcr.yml ps
+```
+
+Ouvre [le frontend livré](http://localhost:8081). Le fichier de surcharge sélectionne l’image téléchargée et le port local `8081`. Pour arrêter la démonstration, utilise les mêmes fichiers avec `down` à la place de `up -d --no-build`.
+
 ## Structure du projet
 
 ```
