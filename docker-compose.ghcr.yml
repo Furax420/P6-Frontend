@@ -1,0 +1,8 @@
+name: p6-ghcr-frontend
+
+services:
+  frontend:
+    build: !reset null
+    image: "${P6_IMAGE:?Set P6_IMAGE to the full GHCR image reference}"
+    ports: !override
+      - "127.0.0.1:8081:80"
