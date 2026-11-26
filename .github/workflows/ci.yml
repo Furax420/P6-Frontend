@@ -77,6 +77,9 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      image_repository: ${{ steps.image.outputs.repository }}
+      image_digest: ${{ steps.publish.outputs.digest }}
     defaults:
       run:
         shell: bash
@@ -94,7 +97,8 @@ jobs:
           branch=${branch:-branch}
           # A Docker tag fits 87 branch characters, one hyphen and the 40-character SHA.
           tag="${branch:0:87}-$GITHUB_SHA"
-          printf 'ref=ghcr.io/%s:%s\n' "${GITHUB_REPOSITORY,,}" "$tag" >> "$GITHUB_OUTPUT"
+          repository="ghcr.io/${GITHUB_REPOSITORY,,}"
+          printf 'repository=%s\nref=%s:%s\n' "$repository" "$repository" "$tag" >> "$GITHUB_OUTPUT"
 
       - name: Build image
         env:
@@ -106,6 +110,7 @@ jobs:
             --tag "$IMAGE" .
 
       - name: Publish image to GHCR
+        id: publish
         env:
           IMAGE: ${{ steps.image.outputs.ref }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -113,4 +118,50 @@ jobs:
           printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
           trap 'docker logout ghcr.io >/dev/null' EXIT
           docker push "$IMAGE"
+          digest=$(docker buildx imagetools inspect --format '{{.Manifest.Digest}}' "$IMAGE")
+          if [[ ! "$digest" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "The published image digest is missing or invalid." >&2
+            exit 1
+          fi
+          printf 'digest=%s\n' "$digest" >> "$GITHUB_OUTPUT"
           printf '### Docker image published on GHCR\n\n%s\n' "$IMAGE" >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    name: Create release
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.deleted
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      packages: write
+    concurrency:
+      group: semantic-release-main
+      cancel-in-progress: false
+
+    steps:
+      - name: Get Git history and tags
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22.23.5"
+          cache: npm
+
+      - name: Install release dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Release with semantic-release
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_IMAGE_REPOSITORY: ${{ needs.build.outputs.image_repository }}
+          RELEASE_IMAGE_DIGEST: ${{ needs.build.outputs.image_digest }}
+        run: |
+          printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          trap 'docker logout ghcr.io >/dev/null' EXIT
+          npm run release

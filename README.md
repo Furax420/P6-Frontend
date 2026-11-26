@@ -173,6 +173,12 @@ Sur Linux, utiliser `python3 run-tests.py` si la commande `python` n'est pas dis
 
 Le workflow `.github/workflows/ci.yml` lance ces tests à chaque push et pull request. Dans l'onglet **Actions**, sélectionner une exécution pour consulter son résumé et télécharger le rapport JUnit dans l'artefact `junit-test-results`, y compris après un échec si le rapport a pu être généré.
 
+### Releases automatiques
+
+Après les tests et la publication de l'image sur `main`, `semantic-release` analyse les commits depuis le dernier tag Git. Une correction `fix:` peut créer une version corrective et une nouveauté `feat:` une version mineure. Un changement incompatible signalé par `!` ou `BREAKING CHANGE` peut créer une version majeure.
+
+La release GitHub indique la référence de l'image versionnée et son digest. Par exemple, pour une release Git `v1.0.0`, l'image GHCR reçoit le tag Docker `1.0.0` en plus du tag `main-<SHA>`. Les deux tags désignent le même contenu. Un commit de release enregistre le changelog et les fichiers de version.
+
 ## License
 
 MIT
